@@ -1,5 +1,9 @@
+import os
+import shutil
+import tempfile
 from moviepy.editor import VideoFileClip
 from datetime import datetime
+import ffmpeg
 
 
 def update_video_creation_date(video_file_path: str, new_date: datetime) -> None:
@@ -18,8 +22,26 @@ def update_video_creation_date(video_file_path: str, new_date: datetime) -> None
     Example:
         update_video_creation_date('example.mp4', datetime(2023, 7, 14, 12, 0, 0))
     """
-    video = VideoFileClip(video_file_path)
-    formatted_date: str = new_date.strftime('%Y:%m:%d %H:%M:%S')
-    video.meta['creation_date'] = formatted_date
+    formatted_date = new_date.strftime("%Y-%m-%d %H:%M:%S")
 
-    video.write_videofile(video_file_path)
+    with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as temp_file:
+        temp_output = temp_file.name
+
+    try:
+        stream = ffmpeg.input(video_file_path)
+
+        stream = ffmpeg.output(stream, temp_output,
+                               **{'metadata:g:0': f"date={formatted_date}",
+                                  'metadata:g:1': f"creation_time={formatted_date}"},
+                               codec='copy')
+        ffmpeg.run(stream, overwrite_output=True, quiet=True)
+
+        # remove + copy rather than replace due wsl fun times
+        os.remove(video_file_path)
+        shutil.move(temp_output, video_file_path)
+    except ffmpeg.Error as e:
+        error_message = e.stderr.decode() if e.stderr else str(e)
+        raise ValueError(f"Error processing video file: {error_message}")
+    finally:
+        if os.path.exists(temp_output):
+            os.remove(temp_output)
