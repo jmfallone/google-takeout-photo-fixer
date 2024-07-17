@@ -28,7 +28,7 @@ if __name__ == '__main__':
                 media_paths.append(os.path.abspath(os.path.join(root, file)))
 
     print(media_paths)
-    print(f'Found {len(media_paths)} media files')
+    # print(f'Found {len(media_paths)} media files')
 
     # TODO: parallelism!
     for media_path in media_paths:
