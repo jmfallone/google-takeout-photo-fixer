@@ -20,13 +20,14 @@ if __name__ == '__main__':
         exit(-1)
     
     media_paths = []
-    exts = ['*.jpg', '*.mp4']
-
+    exts = ['.jpg', '.mp4']
     print('Searching for jpg and mp4 files...')
-    for ext in exts:
-        for file in glob.glob(os.path.join(args.source, ext)):
-            media_paths.append(os.path.abspath(file))
-    
+    for root, dirs, files in os.walk(args.source):
+        for file in files:
+            if file.lower().endswith(tuple(exts)):
+                media_paths.append(os.path.abspath(os.path.join(root, file)))
+
+    print(media_paths)
     print(f'Found {len(media_paths)} media files')
 
     # TODO: parallelism!
