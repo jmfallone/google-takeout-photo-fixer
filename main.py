@@ -11,6 +11,7 @@ from utils.video_utils import update_video_creation_date
 if __name__ == '__main__':
     parser = ArgumentParser('Google Takeout Photo and Video Fixer')
     parser.add_argument('source', help='The unzipped directory (no subdirs please, run for each year)')
+    parser.add_argument('--delete-json-files', '-d', default=False, action='store_true')
     args = parser.parse_args()
 
     if os.path.exists(args.source):
@@ -27,8 +28,7 @@ if __name__ == '__main__':
             if file.lower().endswith(tuple(exts)):
                 media_paths.append(os.path.abspath(os.path.join(root, file)))
 
-    print(media_paths)
-    # print(f'Found {len(media_paths)} media files')
+    print(f'Found {len(media_paths)} media files')
 
     # TODO: parallelism!
     for media_path in media_paths:
@@ -47,5 +47,11 @@ if __name__ == '__main__':
             print(f'Running video changes on {media_path}')
             update_video_creation_date(media_path, actual_date)
         else:
-            print(f'Unexpected file: {media_path}')
+            print(f'Unexpected file: {media_path}, skipping...')
+            continue
+        
+        if args.delete_json_files:
+            print('deleting takeout file: {media_path}.json')
+            os.remove(f'{media_path}.json')
+            
             
